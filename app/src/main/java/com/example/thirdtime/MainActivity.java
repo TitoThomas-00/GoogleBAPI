@@ -48,9 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private void jsonParse() {
 
 
-        //String url = "https://booksrun.com/api/price/sell/"+inputText.getText()+"?key=t2xlhotmhy246sby0zvu"; //Book Runs API
         String url = "https://www.googleapis.com/books/v1/volumes?q=" + inputText.getText(); //Google Books API
-
+        String bk_price = String.valueOf(inputText.getText());
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -58,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(JSONObject response) {
                         try {
                             JSONArray itemsArray = response.getJSONArray("items");
-                            //for (int i = 0; i < itemsArray.length(); i++) {
                                 JSONObject itemsObj = itemsArray.getJSONObject(0); //To get first index
                                 JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
                                 String title = volumeObj.optString("title");
@@ -71,16 +69,8 @@ public class MainActivity extends AppCompatActivity {
                                         authorsArrayList.add(authorsArray.optString(0));
                                     }
 
-                                /* //FOR BOOKRUNS API
-                               JSONObject jsonObject = response.getJSONObject("result");
-                                //for(int i = 0;i<jsonObject.length();i++) {
-                                String status = jsonObject.getString("status");
-                                //String message = jsonObject.getString("message");
-                                JSONObject text = jsonObject.getJSONObject("text"); //Prices
-                                mTextViewResults.append(status+" , "+ text);
-
-                                 */ //FOR BOOKRUNS API
                                     mTextViewResults.append("\n\n\n"+title + ", " + authorsArrayList + "\n\n"+"pages:"+pageCount+",\n"+description);
+                                    bk_jsonParse(bk_price); //BookRuns API
 
 
                                 }
@@ -102,6 +92,54 @@ public class MainActivity extends AppCompatActivity {
 
 
         });
+
+        mQueue.add(request);
+
+    }
+
+    private void bk_jsonParse(String l) {
+
+
+        String url = "https://booksrun.com/api/v3/price/buy/"+l+"?key=t2xlhotmhy246sby0zvu"; //Book Runs API
+
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+
+
+                                //FOR BOOKRUNS API
+                                JSONObject jsonObject = response.getJSONObject("result");
+                                String status = jsonObject.getString("status");
+                                JSONObject offers = jsonObject.getJSONObject("offers");
+                                JSONObject bookrs = offers.getJSONObject("booksrun");
+                                JSONObject new_price = bookrs.getJSONObject("new");
+                                Integer price = new_price.getInt("price"); //price of new
+                            mTextViewResults.append(status+" , "+ "\n"+"price of new: $"+price);
+                                //FOR BOOKRUNS API
+
+
+                            }
+
+
+                        catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
+
+                    }
+
+
+                });
 
         mQueue.add(request);
     }
